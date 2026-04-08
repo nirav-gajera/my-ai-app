@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@yield('title', 'Dashboard') — AI Workspace</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
+</head>
+<body>
+<div class="admin-shell">
+
+    {{-- ── Sidebar ─────────────────────────────── --}}
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">AI Workspace</span>
+                <span class="brand-sub">RAG Platform</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <p class="nav-section-label">Main Menu</p>
+
+            <a href="{{ route('dashboard') }}"
+               class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{{ route('conversations.index') }}"
+               class="nav-item {{ request()->routeIs('conversations.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Conversations</span>
+            </a>
+
+            <a href="{{ route('knowledge.index') }}"
+               class="nav-item {{ request()->routeIs('knowledge.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                <span>Knowledge Base</span>
+            </a>
+
+            <p class="nav-section-label">Account</p>
+
+            <a href="{{ route('profile.edit') }}"
+               class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Profile</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</div>
+                <div class="user-info">
+                    <p class="user-name">{{ auth()->user()->name }}</p>
+                    <p class="user-role">{{ auth()->user()->email }}</p>
+                </div>
+                <span class="user-status-dot"></span>
+            </div>
+        </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    {{-- ── Main wrapper ─────────────────────────── --}}
+    <div class="main-wrapper">
+
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="topbar-toggle" id="sidebar-toggle" type="button" aria-label="Toggle sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <nav class="topbar-breadcrumb" aria-label="Breadcrumb">
+                    @yield('breadcrumb')
+                </nav>
+            </div>
+            <div class="topbar-right">
+                @yield('topbar-actions')
+                <div class="topbar-divider"></div>
+                <div class="topbar-user">
+                    <div class="topbar-user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</div>
+                    {{-- redirect to profile --}}
+                    <span class="topbar-user-name"> <a href="{{ route('profile.edit') }}">{{ auth()->user()->name }}</a></span>
+                </div>
+                <form method="POST" action="{{ route('logout') }}" style="display:inline" id="logout-form">
+                    @csrf
+                    <button type="button" class="btn btn-ghost btn-sm" id="logout-trigger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <main class="page-content">
+            <div class="page-heading">
+                <div>
+                    <h1 class="page-title">@yield('page-title')</h1>
+                    <p class="page-subtitle">@yield('page-subtitle')</p>
+                </div>
+                @hasSection('page-heading-actions')
+                <div class="page-heading-actions">
+                    @yield('page-heading-actions')
+                </div>
+                @endif
+            </div>
+
+            @yield('content')
+        </main>
+    </div>
+</div>
+
+<div class="confirm-modal" id="logout-modal" style="display:none">
+    <div class="confirm-modal-backdrop" id="logout-modal-backdrop"></div>
+
+    <div class="confirm-modal-box">
+        <h3 class="confirm-modal-title">Log out?</h3>
+
+        <p class="confirm-modal-body">
+            You will be signed out of your AI workspace and returned to the login screen.
+        </p>
+
+        <div class="confirm-modal-actions">
+            <button type="button" class="btn btn-ghost" id="logout-cancel">
+                Cancel
+            </button>
+
+            <button type="button" class="btn btn-danger-solid" id="logout-confirm">
+                Logout
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const _sidebar = document.getElementById('sidebar');
+    const _overlay = document.getElementById('sidebar-overlay');
+    document.getElementById('sidebar-toggle')?.addEventListener('click', () => {
+        _sidebar.classList.toggle('sidebar-open');
+        _overlay.classList.toggle('active');
+    });
+    _overlay?.addEventListener('click', () => {
+        _sidebar.classList.remove('sidebar-open');
+        _overlay.classList.remove('active');
+    });
+
+    const _logoutForm = document.getElementById('logout-form');
+    const _logoutTrigger = document.getElementById('logout-trigger');
+    const _logoutModal = document.getElementById('logout-modal');
+    const _logoutBackdrop = document.getElementById('logout-modal-backdrop');
+    const _logoutCancel = document.getElementById('logout-cancel');
+    const _logoutConfirm = document.getElementById('logout-confirm');
+
+    const _openLogoutModal = () => {
+        if (_logoutModal) _logoutModal.style.display = '';
+    };
+
+    const _closeLogoutModal = () => {
+        if (_logoutModal) _logoutModal.style.display = 'none';
+    };
+
+    _logoutTrigger?.addEventListener('click', _openLogoutModal);
+    _logoutCancel?.addEventListener('click', _closeLogoutModal);
+    _logoutBackdrop?.addEventListener('click', _closeLogoutModal);
+    _logoutConfirm?.addEventListener('click', () => _logoutForm?.submit());
+</script>
+@stack('scripts')
+</body>
+</html>
