@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ── Knowledge documents API (JSON) ────────────────────────────────
     Route::get('/knowledge-documents',                         [KnowledgeDocumentController::class, 'index'])->name('knowledge-documents.index');
     Route::post('/knowledge-documents',                        [KnowledgeDocumentController::class, 'store'])->name('knowledge-documents.store');
+    Route::put('/knowledge-documents/{knowledgeDocument}/reindex', [KnowledgeDocumentController::class, 'reindex'])->name('knowledge-documents.reindex');
     Route::delete('/knowledge-documents/{knowledgeDocument}',  [KnowledgeDocumentController::class, 'destroy'])->name('knowledge-documents.destroy');
 });
 

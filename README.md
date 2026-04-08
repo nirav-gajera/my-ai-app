@@ -17,6 +17,7 @@ This project is a basic RAG system with three main layers:
 At a high level:
 
 - A user uploads a text file or pastes raw content.
+- A user can later replace an existing document and re-index it without creating a duplicate source.
 - The system stores the original document as a `knowledge_document`.
 - The content is split into smaller chunks.
 - Each chunk gets an embedding vector.
@@ -102,6 +103,8 @@ Allowed uploaded file types:
 
 The file contents are read as text, trimmed, and then passed into the ingestion pipeline.
 
+Existing indexed documents can also be replaced through the knowledge base UI. In that flow, the system keeps the same top-level `knowledge_document` record, deletes its old chunk rows, and regenerates chunks and embeddings from the replacement content.
+
 ## How ingestion works
 
 Ingestion is handled mainly by:
@@ -121,6 +124,17 @@ Flow:
 5. `OpenAIService::embeddings()` calls `Laravel\Ai\Embeddings` to generate embeddings through the SDK.
 6. A `knowledge_document` row is created.
 7. Each chunk is stored in `documents` with its embedding and metadata.
+
+Re-index flow:
+
+1. The user clicks `Replace` on an existing indexed document.
+2. The controller validates the replacement file or pasted content.
+3. `RagService::reindex()` is called.
+4. The existing document's chunk rows are deleted.
+5. The same `knowledge_document` row is updated with the new title, source info, original content, and chunk count.
+6. New chunks and embeddings are generated and stored in `documents`.
+
+This keeps the document identity stable while refreshing the searchable content cleanly.
 
 Chunking behavior:
 
@@ -311,6 +325,7 @@ This is enforced mainly through:
 - `POST /conversations/{conversation}/messages`
 - `GET /knowledge-documents`
 - `POST /knowledge-documents`
+- `PUT /knowledge-documents/{knowledgeDocument}/reindex`
 - `DELETE /knowledge-documents/{knowledgeDocument}`
 
 ## Project images
@@ -359,6 +374,7 @@ This starts the Laravel server, queue listener, log tailing, and Vite dev server
 ## Current limitations
 
 - Only text-like files are supported for ingestion.
+- Re-indexing replaces a document's existing chunks and embeddings; there is no document version history yet.
 - Retrieval scans stored chunk embeddings in the application layer, which is simple but not optimized for large-scale vector search.
 - The service name `OpenAIService` does not match its current role as a Laravel AI SDK wrapper for Gemini.
 - `laravel/ai` is only used for embeddings and answer generation right now, not for SDK-managed conversation memory or vector stores.

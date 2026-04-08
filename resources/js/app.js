@@ -270,6 +270,27 @@ if (convPage) {
     }
 }
 
+const landingBackToTop = document.querySelector('#landing-back-to-top');
+
+if (landingBackToTop) {
+    const toggleBackToTop = () => {
+        const shouldShow = window.scrollY > 320;
+        landingBackToTop.classList.toggle('is-visible', shouldShow);
+    };
+
+    landingBackToTop.addEventListener('click', () => {
+        if (window.scrollY <= 0) return;
+
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    });
+
+    toggleBackToTop();
+    window.addEventListener('scroll', toggleBackToTop, { passive: true });
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Knowledge base page  (#knowledge-page)
 ───────────────────────────────────────────────────────────────────── */
@@ -280,10 +301,12 @@ if (knowledgePage) {
     const routes = JSON.parse(knowledgePage.dataset.routes ?? '{}');
     let selectedDocId = null;
     let selectedDocTitle = '';
+    let reindexDocId = null;
 
     const state = {
         documents: bootState.documents ?? [],
         uploading: false,
+        reindexing: false,
     };
 
     const el = {
@@ -293,12 +316,20 @@ if (knowledgePage) {
         uploadStatus: document.querySelector('#upload-status'),
         deleteStatus: document.querySelector('#delete-status'),
         uploadBtn: document.querySelector('#upload-button'),
+        reindexForm: document.querySelector('#doc-reindex-form'),
+        reindexTitle: document.querySelector('#reindex-document-title'),
+        reindexSubmit: document.querySelector('#doc-reindex-submit'),
+        reindexStatus: document.querySelector('#doc-reindex-status'),
     };
     const docModal = document.getElementById('doc-delete-modal');
     const docBackdrop = document.getElementById('doc-modal-backdrop');
     const docCancel = document.getElementById('doc-modal-cancel');
     const docConfirm = document.getElementById('doc-confirm-delete');
     const docText = document.getElementById('doc-delete-text');
+    const reindexModal = document.getElementById('doc-reindex-modal');
+    const reindexBackdrop = document.getElementById('doc-reindex-backdrop');
+    const reindexCancel = document.getElementById('doc-reindex-cancel');
+    const reindexText = document.getElementById('doc-reindex-text');
 
     const openDocModal = () => {
         docModal.style.display = '';
@@ -309,7 +340,38 @@ if (knowledgePage) {
         selectedDocId = null;
     };
 
+    const openReindexModal = (document) => {
+        reindexDocId = document.id;
+        el.reindexForm?.reset();
+        if (el.reindexTitle) el.reindexTitle.value = document.title ?? '';
+        if (el.reindexStatus) el.reindexStatus.textContent = '';
+        if (reindexText) {
+            reindexText.textContent = `Replace "${document.title}" with a new file or updated text. Existing chunks and embeddings will be regenerated.`;
+        }
+        if (reindexModal) reindexModal.style.display = '';
+    };
 
+    const closeReindexModal = () => {
+        if (reindexModal) reindexModal.style.display = 'none';
+        el.reindexForm?.reset();
+        if (el.reindexStatus) el.reindexStatus.textContent = '';
+        reindexDocId = null;
+    };
+
+    const syncDocument = (document) => {
+        const index = state.documents.findIndex((item) => item.id === document.id);
+        if (index === -1) {
+            state.documents.unshift(document);
+            return;
+        }
+
+        state.documents[index] = {
+            ...state.documents[index],
+            ...document,
+        };
+    };
+
+    
     /* ── Render ── */
     const renderDocuments = () => {
         el.docCount.textContent = String(state.documents.length);
@@ -328,6 +390,12 @@ if (knowledgePage) {
                 <p class="doc-source">${escapeHtml(d.source_name ?? d.source_type ?? 'text')}</p>
                 <p class="doc-date">${prettyDate(d.created_at)}</p>
                 <div class="document-actions">
+                    <button class="btn btn btn-outline-primary btn-sm" type="button" data-reindex-doc-id="${d.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7v6h6M21 17v-6h-6M8.5 10.5l-5.5-5.5 5.5-5.5M15.5 13.5l5.5 5.5-5.5 5.5"/>
+                        </svg>
+                    Replace
+                    </button>
                     <button class="btn btn-outline-danger btn-sm" type="button" data-doc-id="${d.id}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                              fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -351,6 +419,14 @@ if (knowledgePage) {
                 docText.textContent = `Delete "${selectedDocTitle}"? This cannot be undone.`;
 
                 openDocModal();
+            })
+        );
+
+        el.docList.querySelectorAll('[data-reindex-doc-id]').forEach((btn) =>
+            btn.addEventListener('click', () => {
+                const document = state.documents.find((item) => item.id == btn.dataset.reindexDocId);
+                if (!document) return;
+                openReindexModal(document);
             })
         );
     };
@@ -379,18 +455,40 @@ if (knowledgePage) {
         }
     };
 
-    const deleteDocument = async (docId) => {
-        if (!confirm('Delete this knowledge document? This cannot be undone.')) return;
-        el.deleteStatus.textContent = 'Deleting document...';
+    const reindexDocument = async (event) => {
+        event.preventDefault();
+        if (!reindexDocId || state.reindexing) return;
+
+        state.reindexing = true;
+        if (el.reindexSubmit) el.reindexSubmit.disabled = true;
+        if (el.reindexStatus) {
+            el.reindexStatus.textContent = 'Re-indexing document...';
+            el.reindexStatus.style.color = 'var(--text-muted)';
+        }
+
         try {
-            await request(`/knowledge-documents/${docId}`, { method: 'DELETE' });
-            state.documents = state.documents.filter((d) => d.id !== Number(docId));
+            const formData = new FormData(el.reindexForm);
+            const payload = await request(`${routes.knowledgeDocumentsBase}/${reindexDocId}/reindex`, {
+                method: 'POST',
+                headers: {
+                    'X-HTTP-Method-Override': 'PUT',
+                },
+                body: formData,
+            });
+
+            syncDocument(payload.document);
             renderDocuments();
-            el.deleteStatus.textContent = 'Document deleted.';
+            closeReindexModal();
+            el.deleteStatus.textContent = payload.message;
             el.deleteStatus.style.color = 'var(--success)';
         } catch (e) {
-            el.deleteStatus.textContent = e.message;
-            el.deleteStatus.style.color = 'var(--danger)';
+            if (el.reindexStatus) {
+                el.reindexStatus.textContent = e.message;
+                el.reindexStatus.style.color = 'var(--danger)';
+            }
+        } finally {
+            state.reindexing = false;
+            if (el.reindexSubmit) el.reindexSubmit.disabled = false;
         }
     };
     docConfirm.addEventListener('click', async () => {
@@ -421,8 +519,11 @@ if (knowledgePage) {
     });
     docCancel.addEventListener('click', closeDocModal);
     docBackdrop.addEventListener('click', closeDocModal);
+    reindexCancel?.addEventListener('click', closeReindexModal);
+    reindexBackdrop?.addEventListener('click', closeReindexModal);
     /* ── Wire events ── */
     el.knowledgeForm?.addEventListener('submit', uploadDocument);
+    el.reindexForm?.addEventListener('submit', reindexDocument);
 
     /* ── Initial render ── */
     renderDocuments();

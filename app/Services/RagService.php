@@ -57,6 +57,46 @@ class RagService
         });
     }
 
+    public function reindex(
+        KnowledgeDocument $document,
+        string $title,
+        string $content,
+        ?string $sourceName = null,
+        string $sourceType = 'text',
+    ): KnowledgeDocument {
+        $chunks = $this->chunker->split($content);
+        $embeddings = $this->openAI->embeddings($chunks);
+
+        return DB::transaction(function () use ($document, $title, $content, $sourceName, $sourceType, $chunks, $embeddings) {
+            $document->chunks()->delete();
+
+            $document->update([
+                'title' => $title,
+                'source_name' => $sourceName,
+                'source_type' => $sourceType,
+                'original_content' => $content,
+                'chunk_count' => count($chunks),
+            ]);
+
+            foreach ($chunks as $index => $chunk) {
+                Document::create([
+                    'knowledge_document_id' => $document->id,
+                    'content' => $chunk,
+                    'embedding' => json_encode($embeddings[$index] ?? [], JSON_THROW_ON_ERROR),
+                    'chunk_index' => $index,
+                    'character_count' => mb_strlen($chunk),
+                    'source_name' => $sourceName ?? $title,
+                    'metadata' => [
+                        'title' => $title,
+                        'source_type' => $sourceType,
+                    ],
+                ]);
+            }
+
+            return $document->fresh()->loadCount('chunks');
+        });
+    }
+
     public function answer(Conversation $conversation, string $question): array
     {
         $history = $conversation->messages()
