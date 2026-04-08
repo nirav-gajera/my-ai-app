@@ -313,6 +313,20 @@ This is enforced mainly through:
 - `POST /knowledge-documents`
 - `DELETE /knowledge-documents/{knowledgeDocument}`
 
+## Project images
+
+Screenshots and UI references for the project are available here:
+
+- Screenshot folder: https://www.awesomescreenshot.com/s/folder/F02ravZvo8/28d0cabfa1677c60679fc7a9b057a0f0
+
+This folder can be used for:
+
+- landing page screenshots
+- authentication screens
+- dashboard views
+- conversations interface
+- knowledge base pages
+
 ## Setup
 
 ### Requirements
