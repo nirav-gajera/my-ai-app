@@ -9,14 +9,13 @@
     <link href="https://fonts.bunny.net/css?family=space-grotesk:400,500,700|figtree:400,500,600" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="landing-body">
+<body class="landing-body" id="top">
     <div class="landing-shell">
         <header class="landing-header">
             <a href="{{ route('welcome') }}" class="landing-brand">
                 <span class="landing-brand-mark">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>
                 </span>
                 <span class="landing-brand-copy">
@@ -28,7 +27,7 @@
             <nav class="landing-actions">
                 <a href="{{ route('login') }}" class="landing-btn landing-btn-ghost">Login</a>
                 @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="landing-btn landing-btn-primary">Register</a>
+                <a href="{{ route('register') }}" class="landing-btn landing-btn-primary">Register</a>
                 @endif
             </nav>
         </header>
@@ -46,7 +45,7 @@
 
                     <div class="landing-cta-row">
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="landing-btn landing-btn-primary landing-btn-lg">Start Free</a>
+                        <a href="{{ route('register') }}" class="landing-btn landing-btn-primary landing-btn-lg">Start Free</a>
                         @endif
                         <a href="{{ route('login') }}" class="landing-btn landing-btn-outline landing-btn-lg">Sign In</a>
                     </div>
@@ -162,11 +161,27 @@
                 <div class="landing-cta-row">
                     <a href="{{ route('login') }}" class="landing-btn landing-btn-outline">Login</a>
                     @if (Route::has('register'))
-                        <a href="{{ route('register') }}" class="landing-btn landing-btn-primary">Create Account</a>
+                    <a href="{{ route('register') }}" class="landing-btn landing-btn-primary">Create Account</a>
                     @endif
                 </div>
             </section>
         </main>
     </div>
+    <footer class="landing-footer">
+        <div class="landing-footer-inner">
+            <p>&copy; {{ date('Y') }} My AI App. All rights reserved.</p>
+            <p>Built for private, document-grounded AI workflows.</p>
+        </div>
+
+        <div class="landing-footer-meta">
+            <p>Created by <a href="https://github.com/nirav-gajera" target="_blank" rel="noreferrer">nirav-gajera</a></p>
+        </div>
+    </footer>
+
+    <button type="button" class="landing-back-to-top" id="landing-back-to-top" aria-label="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15" />
+        </svg>
+    </button>
 </body>
 </html>

@@ -270,6 +270,27 @@ if (convPage) {
     }
 }
 
+const landingBackToTop = document.querySelector('#landing-back-to-top');
+
+if (landingBackToTop) {
+    const toggleBackToTop = () => {
+        const shouldShow = window.scrollY > 320;
+        landingBackToTop.classList.toggle('is-visible', shouldShow);
+    };
+
+    landingBackToTop.addEventListener('click', () => {
+        if (window.scrollY <= 0) return;
+
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    });
+
+    toggleBackToTop();
+    window.addEventListener('scroll', toggleBackToTop, { passive: true });
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Knowledge base page  (#knowledge-page)
 ───────────────────────────────────────────────────────────────────── */
@@ -368,7 +389,7 @@ if (knowledgePage) {
                 </div>
                 <p class="doc-source">${escapeHtml(d.source_name ?? d.source_type ?? 'text')}</p>
                 <p class="doc-date">${prettyDate(d.created_at)}</p>
-                <div class="document-actions gap-3">
+                <div class="document-actions">
                     <button class="btn btn btn-outline-primary btn-sm" type="button" data-reindex-doc-id="${d.id}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 7v6h6M21 17v-6h-6M8.5 10.5l-5.5-5.5 5.5-5.5M15.5 13.5l5.5 5.5-5.5 5.5"/>
