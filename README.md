@@ -315,6 +315,7 @@ This is enforced mainly through:
 - `/conversations`
 - `/knowledge`
 - `/profile`
+- `/log-viewer`
 
 ### JSON endpoints
 
@@ -340,6 +341,16 @@ This folder can be used for:
 - dashboard views
 - conversations interface
 - knowledge base pages
+
+## Log viewer
+
+The project includes `opcodesio/log-viewer` for inspecting Laravel logs in the browser.
+
+Use:
+
+- `{APP_URL}/log-viewer`
+
+This is useful for checking runtime errors, exceptions, failed requests, and application log entries without opening the raw log files manually.
 
 ## Setup
 
