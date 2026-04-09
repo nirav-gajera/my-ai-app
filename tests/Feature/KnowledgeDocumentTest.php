@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\KnowledgeDocument;
+use App\Models\User;
 use App\Services\OpenAIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -14,6 +15,12 @@ class KnowledgeDocumentTest extends TestCase
 
     public function test_it_indexes_a_knowledge_document(): void
     {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+
         $mock = Mockery::mock(OpenAIService::class);
         $mock->shouldReceive('embeddings')
             ->once()

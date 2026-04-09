@@ -10,7 +10,6 @@ class KnowledgeDocument extends Model
 {
     protected $fillable = [
         'user_id',
-        'session_id',
         'title',
         'source_name',
         'source_type',

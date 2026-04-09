@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('knowledge_documents', function (Blueprint $table) {
             $table->id();
-            // $table->string('session_id')->index();
             $table->string('title');
             $table->string('source_name')->nullable();
             $table->string('source_type')->default('text');
