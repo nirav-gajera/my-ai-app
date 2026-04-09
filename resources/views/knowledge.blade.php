@@ -52,7 +52,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="document-content">Paste text content</label>
-                        <textarea id="document-content" name="content" class="form-input" rows="8" placeholder="Paste policies, FAQs, playbooks, or any text you want to make searchable..."></textarea>
+                        <textarea id="document-content" name="content" class="form-input" rows="7" placeholder="Paste policies, FAQs, playbooks, or any text you want to make searchable..."></textarea>
                     </div>
 
                     <button class="btn btn-primary btn-full" id="upload-button" type="submit">
@@ -144,7 +144,7 @@
 
             <div class="form-group">
                 <label class="form-label" for="reindex-document-content">Paste new text content</label>
-                <textarea id="reindex-document-content" name="content" class="form-input" rows="7" placeholder="Paste the updated document content here..."></textarea>
+                <textarea id="reindex-document-content" name="content" class="form-input" rows="6" placeholder="Paste the updated document content here..."></textarea>
             </div>
 
             <p class="upload-hint" id="doc-reindex-status"></p>

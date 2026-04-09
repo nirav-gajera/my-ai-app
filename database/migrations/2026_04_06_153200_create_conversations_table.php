@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('conversations', function (Blueprint $table) {
             $table->id();
-            $table->string('session_id')->index();
             $table->string('title')->default('New conversation');
             $table->timestamp('last_message_at')->nullable()->index();
             $table->timestamps();

@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Dashboard') — AI Workspace</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=space-grotesk:400,500,700|figtree:400,500,600" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
-<body>
+<body class="admin-body">
 <div class="admin-shell">
 
     {{-- ── Sidebar ─────────────────────────────── --}}
@@ -17,18 +20,17 @@
             <div class="brand-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
             </div>
             <div class="brand-text">
-                <span class="brand-name">AI Workspace</span>
-                <span class="brand-sub">RAG Platform</span>
+                <span class="brand-name">My AI App</span>
+                <span class="brand-sub">Private knowledge workspace</span>
             </div>
         </div>
 
         <nav class="sidebar-nav">
-            <p class="nav-section-label">Main Menu</p>
+            <p class="nav-section-label">Workspace</p>
 
             <a href="{{ route('dashboard') }}"
                class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -73,6 +75,11 @@
                 <span>Profile</span>
             </a>
         </nav>
+
+        <div class="sidebar-note">
+            <p class="sidebar-note-label">Grounded answers</p>
+            <p class="sidebar-note-copy">Keep your chats aligned with the sources you have indexed in this workspace.</p>
+        </div>
 
         <div class="sidebar-footer">
             <div class="sidebar-user">

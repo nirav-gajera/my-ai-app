@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Document;
 use App\Models\KnowledgeDocument;
+use App\Models\User;
 use App\Services\OpenAIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -15,11 +16,14 @@ class ChatFlowTest extends TestCase
 
     public function test_it_answers_a_question_and_stores_messages(): void
     {
-        $sessionId = 'test-workspace';
-        $this->withSession(['rag_workspace_key' => $sessionId]);
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user);
 
         $knowledgeDocument = KnowledgeDocument::create([
-            'session_id' => $sessionId,
+            'user_id' => $user->id,
             'title' => 'Laravel Docs',
             'source_name' => 'docs.md',
             'source_type' => 'file',

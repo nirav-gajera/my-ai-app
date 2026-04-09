@@ -10,7 +10,6 @@ class Conversation extends Model
 {
     protected $fillable = [
         'user_id',
-        'session_id',
         'title',
         'last_message_at',
     ];

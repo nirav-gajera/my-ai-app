@@ -69,7 +69,6 @@ Stored in `conversations`:
 - `user_id`
 - `title`
 - `last_message_at`
-- optional `session_id`
 
 Conversations hold the message history for chat.
 
