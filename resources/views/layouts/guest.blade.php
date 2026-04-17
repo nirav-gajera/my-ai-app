@@ -18,6 +18,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="auth-page auth-page-shell">
+        @include('layouts.partials.toasts')
         <div class="auth-shell">
             <section class="auth-stage">
                 <div class="auth-card auth-card-rich">

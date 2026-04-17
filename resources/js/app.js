@@ -27,9 +27,69 @@ const request = async (url, options = {}) => {
     headers.set('X-CSRF-TOKEN', csrfToken);
     const response = await fetch(url, { ...options, headers });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.message ?? 'Request failed.');
+    if (!response.ok) {
+        const validationMessage = payload.errors && typeof payload.errors === 'object'
+            ? Object.values(payload.errors).flat().join(' ')
+            : null;
+        throw new Error(validationMessage ?? payload.message ?? 'Request failed.');
+    }
     return payload;
 };
+
+const createToast = ({ type = 'success', title, message }) => {
+    let stack = document.querySelector('#toast-stack');
+
+    if (!stack) {
+        stack = document.createElement('div');
+        stack.id = 'toast-stack';
+        stack.className = 'toast-stack';
+        stack.setAttribute('aria-live', 'polite');
+        stack.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(stack);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notice toast-${type}`;
+    toast.setAttribute('data-toast', '');
+
+    toast.innerHTML = `
+        <div class="toast-icon">
+            ${type === 'success'
+                ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>`
+            }
+        </div>
+        <div class="toast-copy">
+            <strong>${escapeHtml(title ?? (type === 'success' ? 'Success' : 'Error'))}</strong>
+            <p>${escapeHtml(message ?? '')}</p>
+        </div>
+        <button type="button" class="toast-close" aria-label="Dismiss notification">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+    `;
+
+    const closeToast = () => {
+        toast.classList.add('toast-exit');
+        window.setTimeout(() => toast.remove(), 180);
+    };
+
+    toast.querySelector('.toast-close')?.addEventListener('click', closeToast);
+    stack.appendChild(toast);
+    window.setTimeout(closeToast, 4200);
+};
+
+document.querySelectorAll('[data-toast]').forEach((toast) => {
+    const closeToast = () => {
+        toast.classList.add('toast-exit');
+        window.setTimeout(() => toast.remove(), 180);
+    };
+
+    toast.querySelector('[data-toast-close]')?.addEventListener('click', closeToast);
+    window.setTimeout(closeToast, 4200);
+});
 
 /* ─────────────────────────────────────────────────────────────────────
    Conversations page  (#conversations-page)
@@ -198,7 +258,6 @@ if (convPage) {
         if (!state.selectedConversation) return;
 
         el.deleteConvBtn.disabled = true;
-        el.status.textContent = 'Deleting conversation...';
 
         try {
             await request(`/conversations/${state.selectedConversation.id}`, { method: 'DELETE' });
@@ -208,10 +267,18 @@ if (convPage) {
             renderConversations();
             renderMessages();
 
-            el.status.textContent = 'Conversation deleted.';
             closeConModal();
+            createToast({
+                type: 'success',
+                title: 'Conversation deleted',
+                message: 'The conversation was removed successfully.',
+            });
         } catch (e) {
-            el.status.textContent = e.message;
+            createToast({
+                type: 'error',
+                title: 'Delete failed',
+                message: e.message,
+            });
         } finally {
             el.deleteConvBtn.disabled = false;
         }
@@ -305,8 +372,10 @@ if (knowledgePage) {
 
     const state = {
         documents: bootState.documents ?? [],
+        pagination: bootState.pagination ?? { current_page: 1, last_page: 1, total: bootState.documents?.length ?? 0 },
         uploading: false,
         reindexing: false,
+        loadingPage: false,
     };
 
     const el = {
@@ -316,6 +385,7 @@ if (knowledgePage) {
         uploadStatus: document.querySelector('#upload-status'),
         deleteStatus: document.querySelector('#delete-status'),
         uploadBtn: document.querySelector('#upload-button'),
+        pagination: document.querySelector('#document-pagination'),
         reindexForm: document.querySelector('#doc-reindex-form'),
         reindexTitle: document.querySelector('#reindex-document-title'),
         reindexSubmit: document.querySelector('#doc-reindex-submit'),
@@ -371,13 +441,114 @@ if (knowledgePage) {
         };
     };
 
+    const updateKnowledgeUrl = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', String(state.pagination?.current_page ?? 1));
+        url.searchParams.set('per_page', String(state.pagination?.per_page ?? 5));
+        window.history.replaceState({}, '', url);
+    };
+
+    const renderPagination = () => {
+        if (!el.pagination) return;
+
+        const {
+            current_page = 1,
+            last_page = 1,
+            total = state.documents.length,
+            per_page = 5,
+        } = state.pagination ?? {};
+
+        if (!total) {
+            el.pagination.innerHTML = '';
+            return;
+        }
+
+        const pages = [];
+        const startPage = Math.max(1, current_page - 1);
+        const endPage = Math.min(last_page, current_page + 1);
+
+        if (startPage > 1) {
+            pages.push(1);
+            if (startPage > 2) pages.push('ellipsis-start');
+        }
+
+        for (let page = startPage; page <= endPage; page += 1) {
+            pages.push(page);
+        }
+
+        if (endPage < last_page) {
+            if (endPage < last_page - 1) pages.push('ellipsis-end');
+            pages.push(last_page);
+        }
+
+        el.pagination.innerHTML = `
+            <div class="admin-pagination-bar">
+                <label class="pagination-select-label" for="documents-per-page">
+                    <span>Show</span>
+                    <select id="documents-per-page" class="pagination-select">
+                        ${[5, 10, 25, 50, 100].map((option) => `
+                            <option value="${option}" ${option === per_page ? 'selected' : ''}>${option}</option>
+                        `).join('')}
+                    </select>
+                    <span>of ${total}</span>
+                </label>
+
+                <div class="pagination-list">
+                    <button type="button" class="pagination-link" data-doc-page="${current_page - 1}" ${current_page === 1 ? 'disabled' : ''}>« Previous</button>
+                    ${pages.map((page) => page === 'ellipsis-start' || page === 'ellipsis-end'
+                        ? `<span class="pagination-ellipsis">…</span>`
+                        : `
+                    <button type="button" class="pagination-link ${page === current_page ? 'active' : ''}" data-doc-page="${page}">
+                        ${page}
+                    </button>`
+                    ).join('')}
+                    <button type="button" class="pagination-link" data-doc-page="${current_page + 1}" ${current_page === last_page ? 'disabled' : ''}>Next »</button>
+                </div>
+            </div>
+            <div class="pagination-summary">
+                ${total} total documents
+            </div>
+        `;
+
+        el.pagination.querySelector('#documents-per-page')?.addEventListener('change', (event) => {
+            loadDocuments(1, Number(event.target.value));
+        });
+
+        el.pagination.querySelectorAll('[data-doc-page]').forEach((button) =>
+            button.addEventListener('click', () => loadDocuments(Number(button.dataset.docPage), per_page))
+        );
+    };
+
+    const loadDocuments = async (page = 1, perPage = state.pagination?.per_page ?? 5) => {
+        if (state.loadingPage) return;
+
+        state.loadingPage = true;
+
+        try {
+            const payload = await request(`${routes.knowledgeDocumentsBase}?page=${page}&per_page=${perPage}`);
+            state.documents = payload.documents ?? [];
+            state.pagination = payload.pagination ?? state.pagination;
+            renderDocuments();
+            updateKnowledgeUrl();
+        } catch (e) {
+            createToast({
+                type: 'error',
+                title: 'Loading failed',
+                message: e.message,
+            });
+        } finally {
+            state.loadingPage = false;
+        }
+    };
+
     
     /* ── Render ── */
     const renderDocuments = () => {
-        el.docCount.textContent = String(state.documents.length);
+        el.docCount.textContent = String(state.pagination?.total ?? state.documents.length);
 
         if (!state.documents.length) {
             el.docList.innerHTML = '<div class="empty-state">No knowledge documents indexed yet. Upload a file or paste content to get started.</div>';
+            renderPagination();
             return;
         }
 
@@ -429,6 +600,8 @@ if (knowledgePage) {
                 openReindexModal(document);
             })
         );
+
+        renderPagination();
     };
 
     /* ── Actions ── */
@@ -437,18 +610,24 @@ if (knowledgePage) {
         if (state.uploading) return;
         state.uploading = true;
         el.uploadBtn.disabled = true;
-        el.uploadStatus.textContent = 'Chunking and embedding document...';
         try {
             const formData = new FormData(el.knowledgeForm);
             const payload = await request(routes.knowledgeDocuments, { method: 'POST', body: formData });
-            state.documents.unshift(payload.document);
-            renderDocuments();
+            await loadDocuments(1, state.pagination?.per_page ?? 5);
             el.knowledgeForm.reset();
-            el.uploadStatus.textContent = payload.message;
-            el.uploadStatus.style.color = 'var(--success)';
+            if (el.uploadStatus) el.uploadStatus.textContent = '';
+            createToast({
+                type: 'success',
+                title: 'Document indexed',
+                message: payload.message,
+            });
         } catch (e) {
-            el.uploadStatus.textContent = e.message;
-            el.uploadStatus.style.color = 'var(--danger)';
+            if (el.uploadStatus) el.uploadStatus.textContent = '';
+            createToast({
+                type: 'error',
+                title: 'Indexing failed',
+                message: e.message,
+            });
         } finally {
             state.uploading = false;
             el.uploadBtn.disabled = false;
@@ -461,10 +640,7 @@ if (knowledgePage) {
 
         state.reindexing = true;
         if (el.reindexSubmit) el.reindexSubmit.disabled = true;
-        if (el.reindexStatus) {
-            el.reindexStatus.textContent = 'Re-indexing document...';
-            el.reindexStatus.style.color = 'var(--text-muted)';
-        }
+        if (el.reindexStatus) el.reindexStatus.textContent = '';
 
         try {
             const formData = new FormData(el.reindexForm);
@@ -479,13 +655,17 @@ if (knowledgePage) {
             syncDocument(payload.document);
             renderDocuments();
             closeReindexModal();
-            el.deleteStatus.textContent = payload.message;
-            el.deleteStatus.style.color = 'var(--success)';
+            createToast({
+                type: 'success',
+                title: 'Document updated',
+                message: payload.message,
+            });
         } catch (e) {
-            if (el.reindexStatus) {
-                el.reindexStatus.textContent = e.message;
-                el.reindexStatus.style.color = 'var(--danger)';
-            }
+            createToast({
+                type: 'error',
+                title: 'Re-indexing failed',
+                message: e.message,
+            });
         } finally {
             state.reindexing = false;
             if (el.reindexSubmit) el.reindexSubmit.disabled = false;
@@ -494,27 +674,36 @@ if (knowledgePage) {
     docConfirm.addEventListener('click', async () => {
         if (!selectedDocId) return;
 
-        el.deleteStatus.textContent = 'Deleting document...';
-        el.deleteStatus.style.color = 'var(--danger)';
-
         try {
             await request(`/knowledge-documents/${selectedDocId}`, {
                 method: 'DELETE'
             });
 
-            state.documents = state.documents.filter(
-                d => d.id !== Number(selectedDocId)
-            );
+            const nextTotal = Math.max((state.pagination?.total ?? 1) - 1, 0);
+            const shouldStepBack = state.documents.length === 1 && (state.pagination?.current_page ?? 1) > 1;
+            const targetPage = shouldStepBack
+                ? (state.pagination?.current_page ?? 1) - 1
+                : (state.pagination?.current_page ?? 1);
 
-            renderDocuments();
+            state.pagination = {
+                ...state.pagination,
+                total: nextTotal,
+            };
 
-            el.deleteStatus.textContent = 'Document deleted.';
-            el.deleteStatus.style.color = 'var(--success)';
+            await loadDocuments(targetPage, state.pagination?.per_page ?? 5);
 
             closeDocModal();
+            createToast({
+                type: 'success',
+                title: 'Document deleted',
+                message: 'Knowledge document deleted successfully.',
+            });
         } catch (e) {
-            el.deleteStatus.textContent = e.message;
-            el.deleteStatus.style.color = 'var(--danger)';
+            createToast({
+                type: 'error',
+                title: 'Delete failed',
+                message: e.message,
+            });
         }
     });
     docCancel.addEventListener('click', closeDocModal);

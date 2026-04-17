@@ -9,28 +9,35 @@ use Illuminate\Support\Str;
 
 class KnowledgeDocumentController extends Controller
 {
+    private const PER_PAGE_OPTIONS = [5, 10, 25, 50, 100];
+
     private const DOCUMENT_RULES = [
         'title'   => ['nullable', 'string', 'max:255'],
         'content' => ['nullable', 'string', 'min:20'],
         'file'    => ['nullable', 'file', 'mimes:txt,md,markdown,csv,json,log'],
+    ];
+    private const DOCUMENT_MESSAGES = [
+        'title.max' => 'Document title must be 255 characters or fewer.',
+        'content.min' => 'Pasted content must be at least 20 characters long.',
+        'file.mimes' => 'Upload a supported text file: TXT, MD, MARKDOWN, CSV, JSON, or LOG.',
+        'file.file' => 'The uploaded document must be a valid file.',
     ];
 
     /** Knowledge base page (HTML) */
     public function page(Request $request)
     {
         $userId    = $request->user()->id;
-        $documents = KnowledgeDocument::forUser($userId)->withCount('chunks')->latest()->get();
+        $perPage   = $this->resolvePerPage($request);
+        $documents = KnowledgeDocument::forUser($userId)
+            ->withCount('chunks')
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('knowledge', [
             'state' => [
-                'documents' => $documents->map(fn (KnowledgeDocument $d) => [
-                    'id'          => $d->id,
-                    'title'       => $d->title,
-                    'source_name' => $d->source_name,
-                    'source_type' => $d->source_type,
-                    'chunk_count' => $d->chunks_count,
-                    'created_at'  => optional($d->created_at)->toIso8601String(),
-                ])->values(),
+                'documents' => $this->transformDocuments($documents->items()),
+                'pagination' => $this->paginationMeta($documents),
             ],
         ]);
     }
@@ -38,20 +45,17 @@ class KnowledgeDocumentController extends Controller
     /** List documents (JSON API) */
     public function index(Request $request)
     {
+        $perPage = $this->resolvePerPage($request);
+
         $documents = KnowledgeDocument::forUser($request->user()->id)
             ->withCount('chunks')
             ->latest()
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         return response()->json([
-            'documents' => $documents->map(fn (KnowledgeDocument $d) => [
-                'id'          => $d->id,
-                'title'       => $d->title,
-                'source_name' => $d->source_name,
-                'source_type' => $d->source_type,
-                'chunk_count' => $d->chunks_count,
-                'created_at'  => optional($d->created_at)->toIso8601String(),
-            ])->values(),
+            'documents' => $this->transformDocuments($documents->items()),
+            'pagination' => $this->paginationMeta($documents),
         ]);
     }
 
@@ -122,7 +126,7 @@ class KnowledgeDocumentController extends Controller
 
     private function resolveDocumentPayload(Request $request, ?KnowledgeDocument $existingDocument = null): array
     {
-        $validated = $request->validate(self::DOCUMENT_RULES);
+        $validated = $request->validate(self::DOCUMENT_RULES, self::DOCUMENT_MESSAGES);
 
         if (!$request->filled('content') && !$request->hasFile('file')) {
             abort(response()->json([
@@ -151,5 +155,38 @@ class KnowledgeDocumentController extends Controller
             : ($existingDocument?->title ?: ($sourceName ?: Str::limit(Str::squish($content), 60, '...')));
 
         return [$title, $content, $sourceName, $sourceType];
+    }
+
+    private function transformDocuments(iterable $documents): array
+    {
+        return collect($documents)->map(fn (KnowledgeDocument $d) => [
+            'id'          => $d->id,
+            'title'       => $d->title,
+            'source_name' => $d->source_name,
+            'source_type' => $d->source_type,
+            'chunk_count' => $d->chunks_count,
+            'created_at'  => optional($d->created_at)->toIso8601String(),
+        ])->values()->all();
+    }
+
+    private function paginationMeta($paginator): array
+    {
+        return [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
+        ];
+    }
+
+    private function resolvePerPage(Request $request): int
+    {
+        $perPage = (int) $request->integer('per_page', self::PER_PAGE_OPTIONS[0]);
+
+        return in_array($perPage, self::PER_PAGE_OPTIONS, true)
+            ? $perPage
+            : self::PER_PAGE_OPTIONS[0];
     }
 }

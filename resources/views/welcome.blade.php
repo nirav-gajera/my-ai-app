@@ -168,6 +168,8 @@
             </section>
         </main>
     </div>
+    @include('layouts.partials.toasts')
+
     <footer class="landing-footer">
         <div class="landing-footer-inner">
             <p>&copy; {{ date('Y') }} My AI App. All rights reserved.</p>

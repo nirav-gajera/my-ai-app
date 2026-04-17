@@ -6,7 +6,7 @@
    Design tokens
 ───────────────────────────────────────── */
 :root {
-    --sidebar-w: 258px;
+    --sidebar-w: 265px;
     --topbar-h: 68px;
 
     /* Sidebar */
@@ -688,7 +688,7 @@ a { text-decoration: none; }
 /* Footer */
 .sidebar-footer {
     border-top: 1px solid var(--sb-border);
-    padding: 14px;
+    padding: 12px;
     flex-shrink: 0;
 }
 
@@ -716,7 +716,7 @@ a { text-decoration: none; }
 }
 
 .user-info { flex: 1; }
-.user-name  { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-name  { font-size: 13px; font-weight: 600; color: #5d6672; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-role  { font-size: 11px; color: var(--sb-label); }
 
 .user-status-dot {
@@ -1858,6 +1858,377 @@ textarea.form-input { resize: vertical; }
     margin-top: 2px;
 }
 
+/* --------------------------------------------------------------------------
+   Admin users resource
+--------------------------------------------------------------------------- */
+.admin-filter-form {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.5fr) minmax(180px, 0.8fr) auto;
+    gap: 14px;
+    align-items: end;
+}
+
+.admin-filter-actions,
+.admin-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.table-shell {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: rgba(19, 41, 72, 0.03);
+}
+
+.data-table th,
+.data-table td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+    vertical-align: middle;
+}
+
+.data-table th {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.data-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.48);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table-actions-cell {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.inline-form {
+    display: inline-flex;
+}
+
+.table-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.table-meta strong {
+    font-size: 13px;
+    color: var(--text);
+}
+
+.table-meta span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.admin-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.admin-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1d4ed8, #0f766e);
+    color: #fff;
+    font: 700 12px/1 'Space Grotesk', 'Figtree', sans-serif;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.admin-user-meta {
+    min-width: 0;
+}
+
+.admin-user-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.admin-user-subtitle {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.role-badge-admin {
+    background: rgba(15, 118, 110, 0.1);
+    border-color: rgba(15, 118, 110, 0.16);
+    color: var(--success);
+}
+
+.role-badge-user {
+    background: rgba(19, 41, 72, 0.06);
+    border-color: rgba(19, 41, 72, 0.1);
+    color: #355c7d;
+}
+
+.self-lock-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(19, 41, 72, 0.05);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: not-allowed;
+}
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.form-group-full {
+    grid-column: 1 / -1;
+}
+
+.setting-toggle {
+    display: block;
+    cursor: pointer;
+}
+
+.setting-toggle > input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.setting-toggle-ui {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    background: rgba(248, 251, 255, 0.84);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.setting-toggle-ui::before {
+    content: '';
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    border-radius: 999px;
+    border: 2px solid rgba(19, 41, 72, 0.18);
+    background: #fff;
+    box-shadow: inset 0 0 0 4px #fff;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.setting-toggle input:checked + .setting-toggle-ui {
+    border-color: rgba(29, 78, 216, 0.22);
+    background: rgba(29, 78, 216, 0.06);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.08);
+}
+
+.setting-toggle input:checked + .setting-toggle-ui::before {
+    border-color: var(--primary);
+    background: var(--primary);
+}
+
+.setting-toggle-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.setting-toggle-copy strong {
+    font-size: 13.5px;
+    color: var(--text);
+}
+
+.setting-toggle-copy span {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.form-note {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(19, 41, 72, 0.04);
+    border: 1px solid rgba(19, 41, 72, 0.08);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.admin-pagination {
+    margin-top: 16px;
+}
+
+.admin-pagination-inline {
+    margin-top: 16px;
+}
+
+.admin-pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.admin-per-page-form {
+    margin: 0;
+}
+
+.pagination-select-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pagination-select {
+    height: 38px;
+    padding: 0 28px 0 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--text);
+    font: inherit;
+}
+
+.pagination-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+.admin-pagination nav,
+.admin-pagination > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.admin-pagination nav > div:first-child {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.admin-pagination nav > div:last-child,
+.pagination-list {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-pagination nav span,
+.admin-pagination nav a,
+.pagination-link {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.admin-pagination nav a:hover,
+.pagination-link:hover:not(:disabled) {
+    border-color: rgba(29, 78, 216, 0.25);
+    background: rgba(29, 78, 216, 0.06);
+    color: var(--primary);
+}
+
+.admin-pagination nav span[aria-current="page"],
+.pagination-link.active {
+    border-color: rgba(29, 78, 216, 0.2);
+    background: rgba(29, 78, 216, 0.1);
+    color: var(--primary);
+}
+
+.admin-pagination nav span.text-gray-500,
+.admin-pagination nav span[aria-disabled="true"],
+.pagination-link:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.pagination-link {
+    cursor: pointer;
+}
+
+.pagination-summary {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.pagination-ellipsis {
+    color: var(--text-subtle);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 0 2px;
+}
+
 /* ─────────────────────────────────────────
    Alerts / notices
 ───────────────────────────────────────── */
@@ -1872,6 +2243,112 @@ textarea.form-input { resize: vertical; }
     background: var(--success-light);
     border: 1px solid rgba(16,185,129,0.3);
     color: #065f46;
+}
+
+.toast-stack {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(360px, calc(100vw - 32px));
+}
+
+.toast-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 14px 14px 16px;
+    border-radius: 18px;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(14px);
+    animation: toast-enter 0.18s ease-out;
+}
+
+.toast-success {
+    border-color: rgba(15, 118, 110, 0.18);
+}
+
+.toast-error {
+    border-color: rgba(239, 68, 68, 0.18);
+}
+
+.toast-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.toast-success .toast-icon {
+    background: rgba(15, 118, 110, 0.1);
+    color: var(--success);
+}
+
+.toast-error .toast-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.toast-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-copy strong {
+    display: block;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.toast-copy p {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-muted);
+}
+
+.toast-close {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-subtle);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    background: rgba(19, 41, 72, 0.06);
+    color: var(--text);
+}
+
+.toast-exit {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+@keyframes toast-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .input-error { border-color: var(--danger) !important; }
@@ -1990,6 +2467,8 @@ textarea.form-input { resize: vertical; }
 @media (max-width: 1024px) {
     .conversations-layout  { grid-template-columns: 240px minmax(0, 1fr); }
     .overview-grid         { grid-template-columns: 1fr; }
+    .admin-filter-form     { grid-template-columns: 1fr 1fr; }
+    .admin-filter-actions  { grid-column: 1 / -1; justify-content: flex-start; }
     .landing-steps         { grid-template-columns: 1fr; }
     .landing-feature-grid  { grid-template-columns: 1fr; }
     .landing-bottom-cta    { flex-direction: column; align-items: flex-start; }
@@ -2011,6 +2490,7 @@ textarea.form-input { resize: vertical; }
     .conversations-layout  { grid-template-columns: minmax(0, 1fr); }
     .page-content          { padding: 16px; }
     .profile-layout          { flex-direction: column; }
+    .admin-form-grid       { grid-template-columns: 1fr; }
     .landing-header        { flex-direction: column; align-items: flex-start; }
     .landing-actions       { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
     .landing-stat-grid     { grid-template-columns: 1fr; }
@@ -2026,6 +2506,10 @@ textarea.form-input { resize: vertical; }
     .card-footer         { padding: 12px 14px; }
     .topbar-user-name    { display: none; }
     .confirm-modal-box   { padding: 20px; }
+    .admin-filter-form   { grid-template-columns: 1fr; }
+    .data-table th,
+    .data-table td       { padding: 14px; }
+    .table-actions       { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
     .landing-shell       { width: min(100% - 20px, 1400px); padding-top: 18px; padding-bottom: 36px; }
     .landing-hero,
     .landing-section,

@@ -59,7 +59,7 @@
                 </svg>
             </div>
             <div class="stat-body">
-                <p class="stat-label">Logged in as</p>
+                <p class="stat-label">Logged in as @if (Auth::user()->is_admin): Admin @endif</p>
                 <p class="stat-value stat-value-status">
                     <span class="status-dot-green"></span>
                     {{ Str::limit(auth()->user()->name, 14) }}

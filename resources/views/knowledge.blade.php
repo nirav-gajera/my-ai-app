@@ -87,6 +87,7 @@
                 <div class="document-list" id="document-list">
                     <p class="empty-state">No knowledge documents indexed yet. Upload a file or paste content to get started.</p>
                 </div>
+                <div class="admin-pagination admin-pagination-inline" id="document-pagination"></div>
                 <p class="delete-hint mt-2" id="delete-status">
 
                 </p>
