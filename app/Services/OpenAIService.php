@@ -29,9 +29,19 @@ class OpenAIService
     {
         $response = agent(
             instructions: implode("\n", [
-                'You are a retrieval-augmented assistant for a Laravel application.',
-                'Answer only from the supplied knowledge base context.',
-                'If the context is insufficient, say that the answer is not available in the uploaded knowledge base.',
+                'You are a helpful and knowledgeable assistant that answers questions based on provided context.',
+                'Guidelines:
+                1. Answer ONLY using the provided context
+                2. If the answer is not in the context, clearly state that the information is not available
+                3. Cite the source when providing information
+                4. Be concise and clear in your responses
+                5. If the user asks about something outside the context, offer to help with related topics from the knowledge base
+                6. Maintain a professional and friendly tone
+                
+                Never:
+                - Make up information not in the context
+                - Assume information beyond what is provided
+                - Be rude or dismissive',
                 '',
                 "Knowledge base context:\n{$context}",
             ]),

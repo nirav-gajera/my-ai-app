@@ -14,7 +14,6 @@ class RagService
     public function __construct(
         private readonly OpenAIService $openAI,
         private readonly TextChunker $chunker,
-        private readonly SimilarityService $similarity,
     ) {
     }
 
@@ -38,20 +37,26 @@ class RagService
                 'chunk_count' => count($chunks),
             ]);
 
+            $documentData = [];
+            $now = now();
             foreach ($chunks as $index => $chunk) {
-                Document::create([
+                $documentData[] = [
                     'knowledge_document_id' => $document->id,
                     'content' => $chunk,
                     'embedding' => json_encode($embeddings[$index] ?? [], JSON_THROW_ON_ERROR),
                     'chunk_index' => $index,
                     'character_count' => mb_strlen($chunk),
                     'source_name' => $sourceName ?? $title,
-                    'metadata' => [
+                    'metadata' => json_encode([
                         'title' => $title,
                         'source_type' => $sourceType,
-                    ],
-                ]);
+                    ]),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
+
+            DB::table('documents')->insert($documentData);
 
             return $document->loadCount('chunks');
         });
@@ -78,20 +83,26 @@ class RagService
                 'chunk_count' => count($chunks),
             ]);
 
+            $documentData = [];
+            $now = now();
             foreach ($chunks as $index => $chunk) {
-                Document::create([
+                $documentData[] = [
                     'knowledge_document_id' => $document->id,
                     'content' => $chunk,
                     'embedding' => json_encode($embeddings[$index] ?? [], JSON_THROW_ON_ERROR),
                     'chunk_index' => $index,
                     'character_count' => mb_strlen($chunk),
                     'source_name' => $sourceName ?? $title,
-                    'metadata' => [
+                    'metadata' => json_encode([
                         'title' => $title,
                         'source_type' => $sourceType,
-                    ],
-                ]);
+                    ]),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
+
+            DB::table('documents')->insert($documentData);
 
             return $document->fresh()->loadCount('chunks');
         });
@@ -173,38 +184,30 @@ class RagService
     public function retrieveRelevantChunks(int $userId, string $question, int $limit = 5): array
     {
         $questionEmbedding = $this->openAI->embedding($question);
+        $vectorString = '['.implode(',', $questionEmbedding).']';
 
         $chunks = Document::query()
-            // ->whereVectorSimilarTo('embedding', $questionEmbedding, minSimilarity: 0.4)
-            ->with('knowledgeDocument:id,title,user_id,source_name')
+            ->select(['id', 'knowledge_document_id', 'content', 'chunk_index', 'source_name'])
+            ->selectRaw('(1 - (embedding <=> ?)) as similarity_score', [$vectorString])
             ->whereHas('knowledgeDocument', fn ($query) => $query->where('user_id', $userId))
+            ->whereRaw('(1 - (embedding <=> ?)) >= ?', [$vectorString, 0.25])
+            ->orderByRaw('embedding <=> ?', [$vectorString])
+            ->with('knowledgeDocument:id,title,source_name')
+            ->limit($limit)
             ->get();
 
-        $topMatches = $chunks->map(function (Document $chunk) use ($questionEmbedding) {
-            $embedding = json_decode($chunk->embedding, true) ?: [];
-            $knowledgeDocument = $chunk->knowledgeDocument;
-
-            return [
-                'knowledge_document_id' => $knowledgeDocument?->id,
-                'title' => $knowledgeDocument?->title ?? 'Untitled document',
-                'source_name' => $chunk->source_name ?? $knowledgeDocument?->source_name,
-                'content' => $chunk->content,
-                'chunk_index' => (int) $chunk->chunk_index,
-                'score' => $this->similarity->cosine($questionEmbedding, $embedding),
-            ];
-        })
-            ->sortByDesc('score')
-            ->take($limit)
-            ->values()
-            ->all();
-
-        $bestScore = $topMatches[0]['score'] ?? 0.0;
-
-        if ($bestScore < 0.15) {
+        if ($chunks->isEmpty()) {
             return [];
         }
 
-        return $topMatches;
+            return $chunks->map(fn (Document $chunk) => [
+                'knowledge_document_id' => $chunk->knowledge_document_id,
+                'title' => $chunk->knowledgeDocument?->title ?? 'Untitled document',
+                'source_name' => $chunk->source_name ?? $chunk->knowledgeDocument?->source_name,
+                'content' => $chunk->content,
+                'chunk_index' => (int) $chunk->chunk_index,
+                'score' => (float) $chunk->similarity_score,
+            ])->all();
     }
 
     private function touchConversation(Conversation $conversation, string $question): void

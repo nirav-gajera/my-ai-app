@@ -20,10 +20,10 @@ At a high level:
 - A user can later replace an existing document and re-index it without creating a duplicate source.
 - The system stores the original document as a `knowledge_document`.
 - The content is split into smaller chunks.
-- Each chunk gets an embedding vector.
-- The chunks and embeddings are stored in the database.
-- When the user asks a question, the system embeds the question.
-- The system compares the question embedding against stored chunk embeddings using cosine similarity.
+- Each chunk gets a high-resolution embedding vector (3072 dimensions).
+- The chunks and embeddings are stored in a **PostgreSQL vector database** (pgvector).
+- When the user asks a question (via web or **Telegram**), the system embeds the question.
+- The system performs a **vector similarity search** using Laravel's native `whereVectorSimilarTo` method, leveraging the database's optimized vector operators for speed and accuracy.
 - The top matching chunks are used as context for the LLM.
 - The generated answer is stored in the conversation along with citations.
 
@@ -90,6 +90,7 @@ The system currently supports two ingestion inputs:
 
 - pasted text content
 - uploaded text-based files
+- **Telegram document attachments** (automatically ingested into your knowledge base)
 
 Allowed uploaded file types:
 
@@ -98,6 +99,23 @@ Allowed uploaded file types:
 - `markdown`
 - `csv`
 - `json`
+- `pdf` (Fully supported via automated parsing)
+
+## Telegram Integration
+
+The system includes a full-featured Telegram bot that acts as a mobile interface for your private knowledge base.
+
+### Features:
+- **Automated Account Linking**: Link your site account to Telegram with a single click in your profile using secure deep-linking (`/start <token>`).
+- **Mobile Q&A**: Ask questions to your knowledge base directly from Telegram.
+- **Conversational Memory**: The bot maintains context across your messages for a natural chat experience.
+- **Document Ingestion**: Forward or upload documents to the bot to automatically add them to your knowledge base.
+- **Rich UI**: Support for Markdown formatting and real-time typing indicators.
+
+### Setup:
+1. Set `TELEGRAM_API_KEY`, `TELEGRAM_BOT_URL` and `TELEGRAM_BOT_USERNAME` in your `.env`.
+2. Register the webhook using `php artisan telegram:set-webhook <your-url>`.
+3. Click "Link Telegram Account" in your user profile.
 - `log`
 
 The file contents are read as text, trimmed, and then passed into the ingestion pipeline.
@@ -112,6 +130,8 @@ Ingestion is handled mainly by:
 - `app/Services/RagService.php`
 - `app/Services/TextChunker.php`
 - `app/Services/OpenAIService.php`
+- `app/Services/TelegramService.php`
+- `Smalot\PdfParser\Parser`
 - `Laravel\Ai\Embeddings`
 
 Flow:
@@ -152,16 +172,13 @@ Flow:
 
 1. The user sends a question in a conversation.
 2. The system creates an embedding for that question through `laravel/ai`.
-3. It loads all chunk rows that belong to the current user's knowledge documents.
-4. It computes cosine similarity between the question embedding and each stored chunk embedding.
-5. It sorts matches by similarity score.
-6. It keeps the top matches.
-7. If the best score is too low, it returns no-context and the assistant says the answer is not in the uploaded knowledge base.
+3. The system performs a native **pgvector** similarity search using the `<=>` (cosine distance) operator via Laravel's `whereVectorSimilarTo`.
+4. The database filters and sorts the most relevant chunks based on vector distance.
+5. The top matches are returned directly to the application layer.
+6. If the best score is too low (below the similarity threshold), the assistant informs the user that the answer is not in the knowledge base.
 
-Important detail:
-
-- Retrieval is currently implemented in application code against chunk rows stored in the database.
-- There is no dedicated vector database in this project right now.
+### Performance Note:
+Unlike traditional RAG implementations that load all embeddings into memory, this system uses **database-level vector search**. This allows the knowledge base to scale to thousands of documents without compromising response time.
 
 ## How answer generation works
 
@@ -221,8 +238,9 @@ For answer generation:
 ### What `laravel/ai` is not doing yet
 
 - It is not managing the app's own `conversations` or `messages` tables
-- It is not handling retrieval or vector search for this app
-- It is not using SDK conversation persistence or vector stores yet
+- It is not using SDK-managed conversation persistence yet
+
+However, it is now deeply integrated into the retrieval layer through the standard Laravel query builder, allowing for seamless vector stores.
 
 Those parts still remain in your own application layer:
 
@@ -297,8 +315,8 @@ This is enforced mainly through:
 
 - `app/Services/RagService.php`
 - `app/Services/TextChunker.php`
-- `app/Services/SimilarityService.php`
 - `app/Services/OpenAIService.php`
+- `app/Services/TelegramService.php`
 
 ### Models
 
@@ -383,9 +401,7 @@ This starts the Laravel server, queue listener, log tailing, and Vite dev server
 
 ## Current limitations
 
-- Only text-like files are supported for ingestion.
 - Re-indexing replaces a document's existing chunks and embeddings; there is no document version history yet.
-- Retrieval scans stored chunk embeddings in the application layer, which is simple but not optimized for large-scale vector search.
 - The service name `OpenAIService` does not match its current role as a Laravel AI SDK wrapper for Gemini.
-- `laravel/ai` is only used for embeddings and answer generation right now, not for SDK-managed conversation memory or vector stores.
+- `laravel/ai` is not yet managing the application's conversation memory tables directly.
 - The README reflects the current code implementation, not a generalized future architecture.

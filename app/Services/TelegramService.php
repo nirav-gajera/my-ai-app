@@ -188,10 +188,27 @@ class TelegramService
         $downloadUrl = "https://api.telegram.org/file/bot{$this->apiKey}/{$filePath}";
 
         try {
-            $content = Http::get($downloadUrl)->body();
+            $response = Http::get($downloadUrl);
+            $content = $response->body();
 
-            // Simple ingestion - assuming it's text for now, but RagService might handle others
-            // In a real app, you might want to use a PDF parser here.
+            // If it's a PDF, parse it
+            if ($mimeType === 'application/pdf' || str_ends_with(strtolower($fileName), '.pdf')) {
+                $parser = new \Smalot\PdfParser\Parser();
+                $pdf = $parser->parseContent($content);
+                $content = $pdf->getText();
+            }
+
+            // Ensure UTF-8 and clean up
+            $encoding = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'ASCII'], true);
+            if ($encoding !== 'UTF-8') {
+                $content = mb_convert_encoding($content, 'UTF-8', $encoding ?: 'auto');
+            }
+            $content = preg_replace('/[^\x20-\x7E\t\r\n\x80-\xFF]/', '', $content); // Remove non-printable characters
+
+            if (empty(trim($content))) {
+                throw new \Exception("The document appears to be empty or contains no readable text.");
+            }
+
             $this->ragService->ingest(
                 $user->id,
                 $fileName,
@@ -202,7 +219,7 @@ class TelegramService
 
             $this->sendMessage($user->telegram_chat_id, "✅ *Document ingested successfully!* You can now ask questions about it.");
         } catch (\Exception $e) {
-            Log::error('Telegram document ingestion failed', ['error' => $e->getMessage()]);
+            Log::error('Telegram document ingestion failed', ['error' => $e->getMessage(), 'file' => $fileName]);
             $this->sendMessage($user->telegram_chat_id, "❌ Error processing document: " . $e->getMessage());
         }
     }
