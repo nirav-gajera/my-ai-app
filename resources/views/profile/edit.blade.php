@@ -103,12 +103,12 @@
                                     </p>
                                 </div>
                                 @if($user->telegram_chat_id)
-                                    <button type="button" id="telegram-unlink-trigger" class="btn btn-outline-danger" style="color: #ef4444; border-color: #ef4444;">
+                                    <button type="button" id="telegram-unlink-trigger" class="btn btn-outline-danger">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
                                         Disconnect
                                     </button>
                                 @else
-                                    <button type="button" onclick="document.getElementById('telegram-link-form').submit();" class="btn btn-ghost" style="color: #0088cc; border-color: #0088cc;">
+                                    <button type="button" onclick="document.getElementById('telegram-link-form').submit();" class="btn btn btn-outline-primary">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                                         Link Account
                                     </button>
