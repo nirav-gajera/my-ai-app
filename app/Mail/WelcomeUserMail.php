@@ -37,6 +37,7 @@ class WelcomeUserMail extends Mailable
                 'loginUrl' => url('/login'),
                 'knowledgeUrl' => url('/knowledge'),
                 'conversationUrl' => url('/conversations'),
+                'telegramBotUrl' => config('services.telegram.bot_url'),
             ],
         );
     }
