@@ -40,13 +40,13 @@ class TelegramController extends Controller
     }
     public function telegramUpdate(Request $request)
     {
-        $request->validate([
-            'telegram_chat_id' => 'nullable|string|max:255',
-            'telegram_enabled' => 'required|boolean',
-        ]);
-
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
+        $request->validate([
+            'telegram_chat_id' => 'nullable|string|max:255|unique:users,telegram_chat_id,' . $user->id,
+            'telegram_enabled' => 'required|boolean',
+        ]);
 
         $user->update([
             'telegram_chat_id' => $request->telegram_chat_id,

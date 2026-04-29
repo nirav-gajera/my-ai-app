@@ -71,7 +71,7 @@ class UsersController extends Controller
             'email' => "required|string|email|max:255|unique:users,email,{$user->id}",
             'password' => 'nullable|string|min:8|confirmed',
             'is_admin' => 'nullable|boolean',
-            'telegram_chat_id' => 'nullable|string',
+            'telegram_chat_id' => "nullable|string|unique:users,telegram_chat_id,{$user->id}",
             'telegram_enabled' => 'nullable|boolean',
         ]);
 
