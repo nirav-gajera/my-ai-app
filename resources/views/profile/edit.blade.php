@@ -273,8 +273,6 @@
     </div>
 </div>
 
-@endsection
-
 <form id="telegram-link-form" action="{{ route('telegram.link') }}" method="POST" style="display: none;">
     @csrf
 </form>
@@ -282,6 +280,8 @@
 <form id="telegram-unlink-form" action="{{ route('telegram.unlink') }}" method="POST" style="display: none;">
     @csrf
 </form>
+
+@endsection
 
 @push('scripts')
 <script>
