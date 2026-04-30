@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\TelegramBot;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -37,7 +38,7 @@ class WelcomeUserMail extends Mailable
                 'loginUrl' => url('/login'),
                 'knowledgeUrl' => url('/knowledge'),
                 'conversationUrl' => url('/conversations'),
-                'telegramBotUrl' => config('services.telegram.bot_url'),
+                'telegramBotUrl' => TelegramBot::getActive()?->bot_url,
             ],
         );
     }

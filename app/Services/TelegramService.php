@@ -2,20 +2,28 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\KnowledgeDocument;
-use App\Services\RagService;
+use App\Models\TelegramBot;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Smalot\PdfParser\Parser;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
 class TelegramService
 {
     protected RagService $ragService;
 
+    protected ?TelegramBot $activeBot;
+
     public function __construct(RagService $ragService)
     {
         $this->ragService = $ragService;
+        $this->activeBot = TelegramBot::getActive();
+
+        if ($this->activeBot) {
+            Telegram::setAccessToken($this->activeBot->token);
+        }
     }
 
     /**
@@ -32,9 +40,9 @@ class TelegramService
 
             return is_object($response) && method_exists($response, 'toArray') ? $response->toArray() : (array) $response;
         } catch (\Exception $e) {
-            Log::error("Telegram API error", [
+            Log::error('Telegram API error', [
                 'message' => $e->getMessage(),
-                'chat_id' => $chatId
+                'chat_id' => $chatId,
             ]);
 
             return [];
@@ -103,7 +111,7 @@ class TelegramService
                 'file_unique_id' => $file->fileUniqueId,
                 'file_size' => $file->fileSize,
                 'file_path' => $file->filePath,
-            ]
+            ],
         ];
     }
 
@@ -116,7 +124,7 @@ class TelegramService
             'offset' => $offset,
         ]);
 
-        return collect($updates)->map(fn($update) => $update->toArray())->toArray();
+        return collect($updates)->map(fn ($update) => $update->toArray())->toArray();
     }
 
     /**
@@ -124,14 +132,20 @@ class TelegramService
      */
     public function processMessage(array $message): void
     {
+        if (! $this->activeBot) {
+            Log::warning('Telegram message received but no active bot is configured. Ignoring.');
+
+            return;
+        }
+
         $chatId = $message['chat']['id'];
         $text = $message['text'] ?? '';
         $document = $message['document'] ?? null;
 
         Log::info('Processing Telegram message', [
             'chat_id' => $chatId,
-            'has_text' => !empty($text),
-            'has_document' => !empty($document)
+            'has_text' => ! empty($text),
+            'has_document' => ! empty($document),
         ]);
 
         // Send typing indicator early
@@ -151,8 +165,9 @@ class TelegramService
                         'telegram_token' => null, // Clear token after use
                     ]);
 
-                    $this->sendMessage($chatId, "✅ *Success!* Your account has been linked.\n\n" .
-                        "You can now chat with your knowledge base directly from here.");
+                    $this->sendMessage($chatId, "✅ *Success!* Your account has been linked.\n\n".
+                        'You can now chat with your knowledge base directly from here.');
+
                     return;
                 }
             }
@@ -160,13 +175,14 @@ class TelegramService
             // Normal start
             $user = User::where('telegram_chat_id', $chatId)->first();
             if ($user) {
-                $this->sendMessage($chatId, "👋 *Welcome back, {$user->name}!*\n\n" .
-                    "How can I help you today?");
+                $this->sendMessage($chatId, "👋 *Welcome back, {$user->name}!*\n\n".
+                    'How can I help you today?');
             } else {
-                $this->sendMessage($chatId, "👋 *Welcome!*\n\n" .
-                    "To link your account, please go to your profile on the website and click the 'Link Telegram' button.\n\n" .
+                $this->sendMessage($chatId, "👋 *Welcome!*\n\n".
+                    "To link your account, please go to your profile on the website and click the 'Link Telegram' button.\n\n".
                     "Your Chat ID: `{$chatId}`");
             }
+
             return;
         }
 
@@ -175,15 +191,17 @@ class TelegramService
             ->where('telegram_enabled', true)
             ->first();
 
-        if (!$user) {
-            $this->sendMessage($chatId, "❌ *Account not linked.*\n\n" .
-                "Please link your account from your profile settings.");
+        if (! $user) {
+            $this->sendMessage($chatId, "❌ *Account not linked.*\n\n".
+                'Please link your account from your profile settings.');
+
             return;
         }
 
         // Handle Document Ingestion
         if ($document) {
             $this->handleDocument($user, $document);
+
             return;
         }
 
@@ -194,6 +212,7 @@ class TelegramService
         // Handle inline commands
         if (trim($text) === '/list') {
             $this->handleListCommand($user, $chatId);
+
             return;
         }
 
@@ -205,9 +224,9 @@ class TelegramService
             Log::error('Error in Telegram RAG processing', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'chat_id' => $chatId
+                'chat_id' => $chatId,
             ]);
-            $this->sendMessage($chatId, "❌ Sorry, I encountered an error while processing your request. Please try again later.");
+            $this->sendMessage($chatId, '❌ Sorry, I encountered an error while processing your request. Please try again later.');
         }
     }
 
@@ -222,6 +241,7 @@ class TelegramService
 
         if ($documents->isEmpty()) {
             $this->sendMessage($chatId, "🗂 *Your Indexed Documents*\n\nYou don't have any documents indexed yet. You can upload files directly here or paste text in the dashboard to get started.");
+
             return;
         }
 
@@ -234,7 +254,7 @@ class TelegramService
                 $message .= "   └ `{$doc->source_name}`\n";
             }
         }
-        
+
         $message .= "\n_To index a new document, simply upload a file to this chat._";
 
         $this->sendMessage($chatId, $message);
@@ -253,14 +273,14 @@ class TelegramService
 
         // Get file path
         $fileInfo = $this->getFile($fileId);
-        if (!isset($fileInfo['result']['file_path'])) {
-            $this->sendMessage($user->telegram_chat_id, "❌ Failed to retrieve file info.");
+        if (! isset($fileInfo['result']['file_path'])) {
+            $this->sendMessage($user->telegram_chat_id, '❌ Failed to retrieve file info.');
+
             return;
         }
 
         $filePath = $fileInfo['result']['file_path'];
-        $apiKey = config('services.telegram.api_key');
-        $downloadUrl = "https://api.telegram.org/file/bot{$apiKey}/{$filePath}";
+        $downloadUrl = "https://api.telegram.org/file/bot{$this->activeBot->token}/{$filePath}";
 
         try {
             $response = Http::get($downloadUrl);
@@ -268,7 +288,7 @@ class TelegramService
 
             // If it's a PDF, parse it
             if ($mimeType === 'application/pdf' || str_ends_with(strtolower($fileName), '.pdf')) {
-                $parser = new \Smalot\PdfParser\Parser();
+                $parser = new Parser;
                 $pdf = $parser->parseContent($content);
                 $content = $pdf->getText();
             }
@@ -281,7 +301,7 @@ class TelegramService
             $content = preg_replace('/[^\x20-\x7E\t\r\n\x80-\xFF]/', '', $content); // Remove non-printable characters
 
             if (empty(trim($content))) {
-                throw new \Exception("The document appears to be empty or contains no readable text.");
+                throw new \Exception('The document appears to be empty or contains no readable text.');
             }
 
             $this->ragService->ingest(
@@ -292,12 +312,13 @@ class TelegramService
                 'telegram'
             );
 
-            $this->sendMessage($user->telegram_chat_id, "✅ *Document ingested successfully!* You can now ask questions about it.");
+            $this->sendMessage($user->telegram_chat_id, '✅ *Document ingested successfully!* You can now ask questions about it.');
         } catch (\Exception $e) {
             Log::error('Telegram document ingestion failed', ['error' => $e->getMessage(), 'file' => $fileName]);
-            $this->sendMessage($user->telegram_chat_id, "❌ Error processing document: " . $e->getMessage());
+            $this->sendMessage($user->telegram_chat_id, '❌ Error processing document: '.$e->getMessage());
         }
     }
+
     /**
      * Generate response using user's knowledge
      */
@@ -312,6 +333,7 @@ class TelegramService
     public function linkUser(int $chatId, User $user): bool
     {
         $user->telegram_chat_id = $chatId;
+
         return $user->save();
     }
 
@@ -321,6 +343,7 @@ class TelegramService
     public function toggleEnabled(User $user, bool $enabled): bool
     {
         $user->telegram_enabled = $enabled;
+
         return $user->save();
     }
 }

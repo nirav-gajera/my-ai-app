@@ -5,6 +5,7 @@ use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KnowledgeDocumentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelegramBotController;
 use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Auth;
@@ -50,13 +51,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ── Admin routes ──────────────────────────────────────────────────────
 Route::middleware('verified')->group(function () {
     Route::prefix('admin')
-            ->name('admin.')
-            ->middleware('can:access-admin')
-            ->group(function () {
-                Route::resource('users', UsersController::class)->except('show');
-            });
+        ->name('admin.')
+        ->middleware('can:access-admin')
+        ->group(function () {
+            Route::resource('users', UsersController::class)->except('show');
+            Route::resource('telegram-bots', TelegramBotController::class)->except('show');
+        });
 });
 
 // ── Telegram webhook ─────────────────────────────────────────────────
-Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])->name('telegram.webhook');
+Route::post('/telegram/webhook/{bot}', [TelegramController::class, 'webhook'])->name('telegram.webhook');
 require __DIR__.'/auth.php';

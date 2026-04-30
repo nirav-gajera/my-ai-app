@@ -136,7 +136,7 @@
                             <span class="setting-toggle-ui">
                                 <span class="setting-toggle-copy">
                                     <strong>Telegram Enabled</strong>
-                                    <span>Enable this to allow the user to chat with their knowledge via Telegram bot. <a href="{{ config('services.telegram.bot_url') }}" class="text-blue" target="_blank">{{ config('services.telegram.bot_url') }}</a></span>
+                                    <span>Enable this to allow the user to chat with their knowledge via Telegram bot. @php $activeBot = \App\Models\TelegramBot::getActive(); @endphp @if($activeBot && $activeBot->bot_url) <a href="{{ $activeBot->bot_url }}" class="text-blue" target="_blank">{{ $activeBot->bot_url }}</a> @else <em>No active bot configured</em> @endif</span>
                                 </span>
                             </span>
                         </label>
