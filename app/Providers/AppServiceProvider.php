@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-         Gate::define('access-admin', fn (User $user): bool => $user->is_admin);
+        Gate::define('access-admin', fn (User $user): bool => $user->is_admin);
     }
 
     /**
@@ -22,7 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (str_starts_with(config('app.url'), 'https://')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceScheme('https');
         }
+
+        Gate::define('viewLogViewer', fn (?User $user): bool => $user?->is_admin ?? false);
     }
 }
