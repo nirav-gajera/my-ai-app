@@ -68,7 +68,7 @@
                                                         <tr>
                                                             <td style="padding:16px 18px;">
                                                                 <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0f766e;">1. Index knowledge</div>
-                                                                <div style="margin-top:6px;font-size:14px;line-height:1.65;color:#10213a;">Upload TXT, MD, CSV, JSON, or LOG files, or paste content directly into your knowledge base.</div>
+                                                                <div style="margin-top:6px;font-size:14px;line-height:1.65;color:#10213a;">Upload TXT, MD, CSV, JSON, PDF or LOG files, or paste content directly into your knowledge base.</div>
                                                             </td>
                                                         </tr>
                                                     </table>

@@ -41,10 +41,10 @@
             @enderror
         </div>
 
-        <label class="auth-remember">
-            <input type="checkbox" name="remember" id="remember_me" {{ old('remember') ? 'checked' : '' }}>
-            Keep me signed in
-        </label>
+        <div class="flex items-center gap-2 auth-remember">
+            <input type="checkbox" name="remember" id="remember_me" {{ old('remember') ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600" id="default-check" />
+            <label for="remember_me" class="text-sm font-medium text-gray-600">Keep me signed in</label>
+        </div>
 
         <button type="submit" class="auth-btn">Sign in</button>
     </form>

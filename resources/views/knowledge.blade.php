@@ -42,8 +42,17 @@
 
                     <div class="form-group">
                         <label class="form-label" for="document-file">Upload a file</label>
-                        <input id="document-file" name="file" type="file" class="form-input" accept=".txt,.md,.markdown,.csv,.json,.log">
-                        <p class="field-hint">Accepted: .txt .md .csv .json .log</p>
+                        <div class="file-input-wrapper">
+                            <input id="document-file" name="file" type="file" class="file-input-hidden" accept=".txt,.md,.markdown,.csv,.json,.log,.pdf">
+                            <label for="document-file" class="file-input-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <span>Choose file...</span>
+                            </label>
+                            <div class="file-input-name" id="document-file-name">No file chosen</div>
+                        </div>
+                        <p class="field-hint">Accepted: .txt .md .csv .json .log, .pdf</p>
                     </div>
 
                     <div class="form-divider">
@@ -135,8 +144,17 @@
 
             <div class="form-group">
                 <label class="form-label" for="reindex-document-file">Upload replacement file</label>
-                <input id="reindex-document-file" name="file" type="file" class="form-input" accept=".txt,.md,.markdown,.csv,.json,.log">
-                <p class="field-hint">Accepted: .txt .md .csv .json .log</p>
+                <div class="file-input-wrapper">
+                    <input id="reindex-document-file" name="file" type="file" class="file-input-hidden" accept=".txt,.md,.markdown,.csv,.json,.log,.pdf">
+                    <label for="reindex-document-file" class="file-input-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span>Choose replacement...</span>
+                    </label>
+                    <div class="file-input-name" id="reindex-document-file-name">No file chosen</div>
+                </div>
+                <p class="field-hint">Accepted: .txt .md .csv .json .log, .pdf</p>
             </div>
 
             <div class="form-divider">
@@ -163,5 +181,30 @@
     </div>
 </div>
 
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const handleFileChange = (inputId, nameId) => {
+            const input = document.getElementById(inputId);
+            const nameDisplay = document.getElementById(nameId);
+            
+            input?.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    nameDisplay.textContent = this.files[0].name;
+                    nameDisplay.style.color = 'var(--text)';
+                    nameDisplay.style.fontWeight = '600';
+                } else {
+                    nameDisplay.textContent = 'No file chosen';
+                    nameDisplay.style.color = 'var(--text-muted)';
+                    nameDisplay.style.fontWeight = '400';
+                }
+            });
+        };
+
+        handleFileChange('document-file', 'document-file-name');
+        handleFileChange('reindex-document-file', 'reindex-document-file-name');
+    });
+</script>
+@endpush
 @endsection
 

@@ -158,7 +158,7 @@
                                                     </button>
                                                 </form>
                                             @else
-                                                <span class="self-lock-badge" title="You cannot delete your own account">
+                                                <span class="self-lock-badge" title="You cannot delete your own account from here.">
                                                     Current account
                                                 </span>
                                             @endif

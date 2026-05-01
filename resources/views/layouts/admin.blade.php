@@ -24,7 +24,7 @@
                 </svg>
             </div>
             <div class="brand-text">
-                <span class="brand-name">My AI App</span>
+                <span class="brand-name">{{ config('app.name') }}</span>
                 <span class="brand-sub">Private knowledge workspace</span>
             </div>
         </div>

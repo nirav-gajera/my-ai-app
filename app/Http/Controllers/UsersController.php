@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 use App\Models\User;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,8 +15,8 @@ class UsersController extends Controller
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('email', 'like', '%' . $request->search . '%');
+                $q->where('name', 'like', '%'.$request->search.'%')
+                    ->orWhere('email', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -35,6 +34,7 @@ class UsersController extends Controller
 
         return view('admin.users.index', compact('users'));
     }
+
     public function create()
     {
         return view('admin.users.create');
@@ -82,17 +82,18 @@ class UsersController extends Controller
                 ? bcrypt($validated['password'])
                 : $user->password,
 
-            'is_admin' => $request->boolean('is_admin'), 
+            'is_admin' => $request->boolean('is_admin'),
             'telegram_chat_id' => $validated['telegram_chat_id'],
             'telegram_enabled' => $request->boolean('telegram_enabled'),
         ]);
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
+
     public function destroy(User $user)
     {
         if (Auth::id() === $user->id) {
-            return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account.');
+            return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account from here.');
         }
 
         $user->delete();
