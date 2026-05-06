@@ -13,6 +13,8 @@ class Message extends Model
         'content',
         'citations',
         'meta',
+        'reaction',
+        'is_pinned',
     ];
 
     protected function casts(): array
@@ -20,6 +22,7 @@ class Message extends Model
         return [
             'citations' => 'array',
             'meta' => 'array',
+            'is_pinned' => 'boolean',
         ];
     }
 

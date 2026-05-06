@@ -123,6 +123,12 @@ if (convPage) {
         sendBtn: document.querySelector('#send-button'),
         newConvBtn: document.querySelector('#new-conversation-button'),
         deleteConvBtn: document.querySelector('#delete-conversation-button'),
+        // Pinned Panel
+        pinnedPanel: document.querySelector('#pinned-panel'),
+        pinnedList: document.querySelector('#pinned-messages-list'),
+        pinCount: document.querySelector('#pin-count'),
+        togglePinnedBtn: document.querySelector('#toggle-pinned-panel'),
+        closePinnedBtn: document.querySelector('#close-pinned-panel'),
     };
 
     const conModal = document.getElementById('con-delete-modal');
@@ -138,6 +144,41 @@ if (convPage) {
         if (conModal) conModal.style.display = 'none';
     };
 
+    const togglePinnedPanel = () => {
+        if (!el.pinnedPanel) return;
+        const isHidden = el.pinnedPanel.style.display === 'none';
+        el.pinnedPanel.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) renderPinnedList();
+    };
+
+    const renderPinnedList = () => {
+        const pinned = state.selectedConversation?.messages?.filter(m => m.is_pinned) ?? [];
+        el.pinCount.textContent = String(pinned.length);
+
+        if (!pinned.length) {
+            el.pinnedList.innerHTML = '<p class="empty-state">No pinned messages yet.</p>';
+            return;
+        }
+
+        el.pinnedList.innerHTML = pinned.map(m => `
+            <div class="pinned-item" data-jump-to="${m.id}">
+                <strong>${m.role === 'assistant' ? 'Assistant' : 'You'}</strong>
+                <p>${escapeHtml(m.content)}</p>
+            </div>
+        `).join('');
+
+        el.pinnedList.querySelectorAll('[data-jump-to]').forEach(item => {
+            item.addEventListener('click', () => {
+                const target = el.msgStream.querySelector(`[data-id="${item.dataset.jumpTo}"]`);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    target.classList.add('jump-highlight');
+                    setTimeout(() => target.classList.remove('jump-highlight'), 2000);
+                }
+            });
+        });
+    };
+
     /* ── Render helpers ── */
     const renderConversations = () => {
         el.convCount.textContent = String(state.conversations.length);
@@ -149,13 +190,18 @@ if (convPage) {
 
         el.convList.innerHTML = state.conversations.map((c) => {
             const active = state.selectedConversation?.id === c.id ? 'active' : '';
+            const lastDate = prettyDate(c.last_message_at ?? c.updated_at);
+            const statusText = c.last_message_at ? 'Active knowledge chat' : 'Empty conversation';
+            
             return `
                 <button class="conversation-card ${active}" type="button" data-id="${c.id}">
-                    <div class="conversation-meta">
-                        <strong>${escapeHtml(c.title)}</strong>
-                        <span>${prettyDate(c.last_message_at ?? c.updated_at)}</span>
+                    <div class="conv-card-header">
+                        <span class="conv-card-title" title="${escapeHtml(c.title)}">${escapeHtml(c.title)}</span>
+                        <span class="conv-card-date">${lastDate}</span>
                     </div>
-                    <p class="muted">${c.last_message_at ? 'Active knowledge chat' : 'Empty conversation'}</p>
+                    <div class="conv-card-footer">
+                        <span class="muted">${statusText}</span>
+                    </div>
                 </button>`;
         }).join('');
 
@@ -168,6 +214,8 @@ if (convPage) {
         const sel = state.selectedConversation;
         el.convTitle.textContent = sel?.title ?? 'New Conversation';
         el.deleteConvBtn.disabled = !sel;
+
+        renderPinnedList();
 
         if (!sel?.messages?.length) {
             el.msgStream.innerHTML = `
@@ -187,16 +235,47 @@ if (convPage) {
                     `<span class="citation-pill">${escapeHtml(c.title)} · chunk ${Number(c.chunk_index) + 1}</span>`
                 ).join('')}</div>`
                 : '';
+
+            const isAssistant = m.role === 'assistant';
+            const reactionHtml = isAssistant ? `
+                <button class="msg-action-btn ${m.reaction === 'like' ? 'active like' : ''}" data-msg-action="like" data-id="${m.id}" title="Good response">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" /></svg>
+                </button>
+                <button class="msg-action-btn ${m.reaction === 'dislike' ? 'active dislike' : ''}" data-msg-action="dislike" data-id="${m.id}" title="Bad response">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2" /><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z" /></svg>
+                </button>
+            ` : '';
+
+            const pinHtml = `
+                <button class="msg-action-btn ${m.is_pinned ? 'active pin' : ''}" data-msg-action="pin" data-id="${m.id}" title="${m.is_pinned ? 'Unpin' : 'Pin'} message">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                </button>
+            `;
+
             return `
-                <article class="message-card ${m.role}">
+                <article class="message-card ${m.role} ${m.is_pinned ? 'pinned' : ''}" data-id="${m.id}">
+                    <div class="pin-indicator">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                        Pinned
+                    </div>
                     <div class="message-meta">
                         <strong>${m.role === 'assistant' ? 'Assistant' : 'You'}</strong>
-                        <span>${prettyDate(m.created_at)}</span>
                     </div>
                     <div class="message-body">${escapeHtml(m.content).replaceAll('\n', '<br>')}</div>
                     ${citations}
+                    <div class="message-footer">
+                        <span class="message-time">${prettyDate(m.created_at)}</span>
+                    </div>
+                    <div class="message-actions">
+                        ${reactionHtml}
+                        ${pinHtml}
+                    </div>
                 </article>`;
         }).join('');
+
+        el.msgStream.querySelectorAll('[data-msg-action]').forEach((btn) => {
+            btn.addEventListener('click', () => handleMessageAction(btn.dataset.id, btn.dataset.msgAction));
+        });
 
         if (state.isTyping) {
             el.msgStream.innerHTML += `
@@ -210,6 +289,28 @@ if (convPage) {
         }
 
         el.msgStream.scrollTop = el.msgStream.scrollHeight;
+    };
+
+    const handleMessageAction = async (msgId, action) => {
+        const msg = state.selectedConversation.messages.find(m => m.id == msgId);
+        if (!msg) return;
+
+        try {
+            if (action === 'like' || action === 'dislike') {
+                const newReaction = msg.reaction === action ? null : action;
+                await request(`/messages/${msgId}/react`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ reaction: newReaction })
+                });
+                msg.reaction = newReaction;
+            } else if (action === 'pin') {
+                await request(`/messages/${msgId}/pin`, { method: 'PATCH' });
+                msg.is_pinned = !msg.is_pinned;
+            }
+            renderMessages();
+        } catch (e) {
+            createToast({ type: 'error', title: 'Action failed', message: e.message });
+        }
     };
 
     /* ── State helpers ── */
@@ -358,6 +459,10 @@ if (convPage) {
     el.msgForm?.addEventListener('submit', sendMessage);
     el.newConvBtn?.addEventListener('click', () => createConversation());
     el.deleteConvBtn?.addEventListener('click', deleteConversation);
+    el.togglePinnedBtn?.addEventListener('click', togglePinnedPanel);
+    el.closePinnedBtn?.addEventListener('click', () => {
+        if (el.pinnedPanel) el.pinnedPanel.style.display = 'none';
+    });
 
     /* ── Initial render ── */
     renderConversations();

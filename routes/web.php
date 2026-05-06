@@ -4,6 +4,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KnowledgeDocumentController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TelegramBotController;
 use App\Http\Controllers\TelegramController;
@@ -46,6 +47,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/knowledge-documents',                        [KnowledgeDocumentController::class, 'store'])->name('knowledge-documents.store');
     Route::put('/knowledge-documents/{knowledgeDocument}/reindex', [KnowledgeDocumentController::class, 'reindex'])->name('knowledge-documents.reindex');
     Route::delete('/knowledge-documents/{knowledgeDocument}',  [KnowledgeDocumentController::class, 'destroy'])->name('knowledge-documents.destroy');
+
+    // ── Message actions API (JSON) ───────────────────────────────────
+    Route::patch('/messages/{message}/react', [MessageController::class, 'react'])->name('messages.react');
+    Route::patch('/messages/{message}/pin', [MessageController::class, 'togglePin'])->name('messages.pin');
 });
 
 // ── Admin routes ──────────────────────────────────────────────────────

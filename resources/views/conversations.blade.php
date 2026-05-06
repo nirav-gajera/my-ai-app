@@ -57,23 +57,47 @@
                     <h2 class="card-title" id="conversation-title">New Conversation</h2>
                     <span class="header-status" id="composer-status">Ready.</span>
                 </div>
-                <button class="btn btn-outline-danger btn-sm" id="delete-conversation-button" type="button" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                        <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                    </svg>
-                    Delete
-                </button>
+                <div class="card-header-actions">
+                    <button class="btn btn-ghost btn-sm btn-pin-toggle" id="toggle-pinned-panel" type="button" title="View Pinned Messages">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                        </svg>
+                        Pinned
+                        <span class="pin-count-badge" id="pin-count">0</span>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" id="delete-conversation-button" type="button" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                        Delete
+                    </button>
+                </div>
             </div>
 
-            <div class="card-body message-body-area">
-                <div class="message-stream" id="message-stream">
-                    <div class="empty-state-chat">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.2">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        <p>Select a conversation or create a new one, then ask a question grounded in your indexed knowledge.</p>
+            <div class="chat-container">
+                <div class="card-body message-body-area">
+                    <div class="message-stream" id="message-stream">
+                        <div class="empty-state-chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                            <p>Select a conversation or create a new one, then ask a question grounded in your indexed knowledge.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Pinned messages panel --}}
+                <div class="pinned-panel" id="pinned-panel" style="display:none">
+                    <div class="pinned-panel-header">
+                        <h3>Pinned Messages</h3>
+                        <button type="button" class="btn-close-panel" id="close-pinned-panel">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                    <div class="pinned-messages-list" id="pinned-messages-list">
+                        <p class="empty-state">No pinned messages yet.</p>
                     </div>
                 </div>
             </div>

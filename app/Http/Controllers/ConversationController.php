@@ -20,7 +20,7 @@ class ConversationController extends Controller
             ->get();
 
         // Allow deep-linking to a specific conversation via ?id=
-        $selectedId           = (int) $request->query('id', 0);
+        $selectedId = (int) $request->query('id', 0);
         $selectedConversation = $startNew
             ? null
             : ($selectedId
@@ -34,20 +34,22 @@ class ConversationController extends Controller
         return view('conversations', [
             'state' => [
                 'conversations' => $conversations->map(fn (Conversation $c) => [
-                    'id'              => $c->id,
-                    'title'           => $c->title,
+                    'id' => $c->id,
+                    'title' => $c->title,
                     'last_message_at' => optional($c->last_message_at)->toIso8601String(),
-                    'updated_at'      => optional($c->updated_at)->toIso8601String(),
+                    'updated_at' => optional($c->updated_at)->toIso8601String(),
                 ])->values(),
                 'selectedConversation' => $selectedConversation ? [
-                    'id'       => $selectedConversation->id,
-                    'title'    => $selectedConversation->title,
+                    'id' => $selectedConversation->id,
+                    'title' => $selectedConversation->title,
                     'messages' => $selectedConversation->messages->map(fn ($m) => [
-                        'id'         => $m->id,
-                        'role'       => $m->role,
-                        'content'    => $m->content,
-                        'citations'  => $m->citations ?? [],
+                        'id' => $m->id,
+                        'role' => $m->role,
+                        'content' => $m->content,
+                        'citations' => $m->citations ?? [],
                         'created_at' => optional($m->created_at)->toIso8601String(),
+                        'reaction' => $m->reaction,
+                        'is_pinned' => (bool) $m->is_pinned,
                     ])->values(),
                 ] : null,
                 'startNew' => $startNew,
@@ -64,14 +66,16 @@ class ConversationController extends Controller
 
         return response()->json([
             'conversation' => [
-                'id'       => $conversation->id,
-                'title'    => $conversation->title,
+                'id' => $conversation->id,
+                'title' => $conversation->title,
                 'messages' => $conversation->messages->map(fn ($m) => [
-                    'id'         => $m->id,
-                    'role'       => $m->role,
-                    'content'    => $m->content,
-                    'citations'  => $m->citations ?? [],
+                    'id' => $m->id,
+                    'role' => $m->role,
+                    'content' => $m->content,
+                    'citations' => $m->citations ?? [],
                     'created_at' => optional($m->created_at)->toIso8601String(),
+                    'reaction' => $m->reaction,
+                    'is_pinned' => (bool) $m->is_pinned,
                 ])->values(),
             ],
         ]);
@@ -82,14 +86,14 @@ class ConversationController extends Controller
     {
         $conversation = Conversation::create([
             'user_id' => $request->user()->id,
-            'title'   => 'New conversation',
+            'title' => 'New conversation',
         ]);
 
         return response()->json([
             'conversation' => [
-                'id'              => $conversation->id,
-                'title'           => $conversation->title,
-                'messages'        => [],
+                'id' => $conversation->id,
+                'title' => $conversation->title,
+                'messages' => [],
                 'last_message_at' => null,
             ],
         ], 201);
