@@ -11,6 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
+        .landing-header, .landing-shell, .landing-footer {
+            z-index: 1;
+        }
         .prose {
             line-height: 1.8;
             font-size: 1.05rem;
@@ -37,7 +40,8 @@
         }
     </style>
 </head>
-<body class="landing-body">
+<body class="landing-body" id="top">
+    <canvas id="bg-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 1;"></canvas>
     <header class="landing-header">
         <div class="landing-header-inner">
             <a href="{{ route('welcome') }}" class="landing-brand">
@@ -106,5 +110,68 @@
             <p>&copy; {{ date('Y') }} {{ config('app.name', 'My AI App') }}. All rights reserved.</p>
         </div>
     </footer>
+    <script>
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles;
+        
+
+        function initAnimation() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+
+            const numParticles = Math.floor((width * height) / 12000);
+
+            for (let i = 0; i < numParticles; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    radius: Math.random() * 1.5 + 0.5
+                });
+            }
+        }
+
+        window.addEventListener('resize', initAnimation);
+        initAnimation();
+
+        function animateBg() {
+            ctx.clearRect(0, 0, width, height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(15, 118, 110, 0.65)';
+                ctx.fill();
+                
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dx = p.x - p2.x;
+                    let dy = p.y - p2.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(29, 78, 216, ${0.30 * (1 - distance/120)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+    </script>
 </body>
 </html>

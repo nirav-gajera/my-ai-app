@@ -99,11 +99,23 @@
                                                 </td>
                                             </tr>
                                             <tr>
+                                                <td style="padding:0 0 12px;">
+                                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fbff;border:1px solid rgba(19,41,72,0.08);border-radius:18px;">
+                                                        <tr>
+                                                            <td style="padding:16px 18px;">
+                                                                <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#e11d48;">4. Secure Notes</div>
+                                                                <div style="margin-top:6px;font-size:14px;line-height:1.65;color:#10213a;">Create, organize, and securely share encrypted notes with expiration timers and passwords.</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
                                                 <td>
                                                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fbff;border:1px solid rgba(19,41,72,0.08);border-radius:18px;">
                                                         <tr>
                                                             <td style="padding:16px 18px;">
-                                                                <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#355c7d;">4. Manage your workspace</div>
+                                                                <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#355c7d;">5. Manage your workspace</div>
                                                                 <div style="margin-top:6px;font-size:14px;line-height:1.65;color:#10213a;">Replace outdated documents, track users if you are an admin, and keep your answers aligned with the latest knowledge.</div>
                                                             </td>
                                                         </tr>
@@ -151,7 +163,14 @@
                                                 &nbsp;•&nbsp;
                                                 <a href="{{ $conversationUrl }}" style="color:#1d4ed8;text-decoration:none;">Conversations</a>
                                                 &nbsp;•&nbsp;
+                                                <a href="{{ $notesUrl }}" style="color:#1d4ed8;text-decoration:none;">Notes</a>
+                                                &nbsp;•&nbsp;
                                                 <a href="{{ $loginUrl }}" style="color:#1d4ed8;text-decoration:none;">Login</a>
+                                            </p>
+                                            <p style="margin:4px 0 0;font-size:12px;line-height:1.8;color:#5d708d;">
+                                                <a href="{{ url('/p/privacy-policy') }}" style="color:#5d708d;text-decoration:none;">Privacy Policy</a>
+                                                &nbsp;|&nbsp;
+                                                <a href="{{ url('/p/terms-of-service') }}" style="color:#5d708d;text-decoration:none;">Terms of Service</a>
                                             </p>
                                         </div>
                                     </td>
