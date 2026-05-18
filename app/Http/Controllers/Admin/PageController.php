@@ -132,6 +132,15 @@ class PageController extends Controller
         // Delete removed contents
         $page->contents()->whereNotIn('id', $contentIds)->delete();
 
+        try {
+            \App\Jobs\NotifyUsersOfPageUpdate::dispatch($page)->delay(now()->addSeconds(2));
+        } catch (\Exception $e) {
+            \Log::info("Error dispatching job", [
+                "message" => $e->getMessage(),
+                "trace" => $e->getTraceAsString(),
+            ]);
+        }
+
         return redirect()->route('admin.pages.index')
             ->with('success', 'Page updated successfully!');
     }

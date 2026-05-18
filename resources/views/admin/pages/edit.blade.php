@@ -223,7 +223,8 @@
                     flatpickr(".datetime-picker", {
                         enableTime: true,
                         dateFormat: "Y-m-d H:i",
-                        minDate: new Date()
+                        minDate: new Date(),
+                        animate: false,
                     });
                 }
             }

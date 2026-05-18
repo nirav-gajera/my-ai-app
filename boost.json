@@ -1,9 +1,17 @@
 {
     "agents": [
-        "codex",
-        "claude_code"
+        "codex"
     ],
+    "guidelines": true,
     "mcp": true,
     "nightwatch_mcp": false,
-    "sail": false
+    "packages": [
+        "laravel/ai"
+    ],
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "tailwindcss-development",
+        "ai-sdk-development"
+    ]
 }

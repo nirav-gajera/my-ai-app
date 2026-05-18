@@ -38,6 +38,7 @@ class WelcomeUserMail extends Mailable
                 'loginUrl' => url('/login'),
                 'knowledgeUrl' => url('/knowledge'),
                 'conversationUrl' => url('/conversations'),
+                'notesUrl' => url('/notes'),
                 'telegramBotUrl' => TelegramBot::getActive()?->bot_url,
             ],
         );
